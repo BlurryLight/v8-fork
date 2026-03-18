@@ -588,7 +588,7 @@ int ScavengerCollector::NumberOfScavengeTasks() {
           SemiSpaceNewSpace::From(heap_->new_space())->TotalCapacity()) /
           MB +
       1;
-  static int num_cores = V8::GetCurrentPlatform()->NumberOfWorkerThreads() + 1;
+  const int num_cores = V8::GetCurrentPlatform()->NumberOfWorkerThreads() + 1;
   int tasks = std::max(
       1, std::min({num_scavenge_tasks, kMaxScavengerTasks, num_cores}));
   if (!heap_->CanPromoteYoungAndExpandOldGeneration(

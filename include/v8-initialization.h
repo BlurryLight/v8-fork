@@ -177,6 +177,21 @@ class V8_EXPORT V8 {
   static void InitializePlatform(Platform* platform);
 
   /**
+   * Enables worker threads on a DefaultPlatform that was previously created
+   * without a worker pool (for example via
+   * v8::platform::NewSingleThreadedDefaultPlatform).
+   *
+   * This must only be called after fork() in the child process, before any V8
+   * operation that may schedule background work. It is invalid to call this
+   * when --single-threaded or --single-threaded-gc is enabled.
+   *
+   * Returns true if worker threads are enabled with the requested size, and
+   * false if worker threads were already enabled with a different size.
+   */
+  static bool EnableWorkerThreads(Platform* platform,
+                                  int thread_pool_size = 1);
+
+  /**
    * Clears all references to the v8::Platform. This should be invoked after
    * V8 was disposed.
    */

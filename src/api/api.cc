@@ -20,6 +20,7 @@
 #include "include/v8-fast-api-calls.h"
 #include "include/v8-function.h"
 #include "include/v8-json.h"
+#include "include/libplatform/libplatform.h"
 #include "include/v8-locker.h"
 #include "include/v8-primitive-object.h"
 #include "include/v8-profiler.h"
@@ -6316,6 +6317,12 @@ void v8::Object::SetAlignedPointerInInternalFields(int argc, int indices[],
 
 void v8::V8::InitializePlatform(Platform* platform) {
   i::V8::InitializePlatform(platform);
+}
+
+bool v8::V8::EnableWorkerThreads(Platform* platform, int thread_pool_size) {
+  CHECK(!i::v8_flags.single_threaded);
+  CHECK(!i::v8_flags.single_threaded_gc);
+  return v8::platform::EnableWorkerThreads(platform, thread_pool_size);
 }
 
 void v8::V8::DisposePlatform() { i::V8::DisposePlatform(); }

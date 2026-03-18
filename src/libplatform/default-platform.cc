@@ -92,6 +92,11 @@ void NotifyIsolateShutdown(v8::Platform* platform, Isolate* isolate) {
   static_cast<DefaultPlatform*>(platform)->NotifyIsolateShutdown(isolate);
 }
 
+bool EnableWorkerThreads(v8::Platform* platform, int thread_pool_size) {
+  return static_cast<DefaultPlatform*>(platform)->EnableWorkerThreads(
+      thread_pool_size);
+}
+
 DefaultPlatform::DefaultPlatform(
     int thread_pool_size, IdleTaskSupport idle_task_support,
     std::unique_ptr<v8::TracingController> tracing_controller,
@@ -135,6 +140,7 @@ double DefaultTimeFunction() {
 }  // namespace
 
 void DefaultPlatform::EnsureBackgroundTaskRunnerInitialized() {
+  DCHECK_GT(thread_pool_size_, 0);
   DCHECK_NULL(worker_threads_task_runners_[0]);
   for (int i = 0; i < num_worker_runners(); i++) {
     worker_threads_task_runners_[i] =
@@ -145,6 +151,17 @@ void DefaultPlatform::EnsureBackgroundTaskRunnerInitialized() {
             priority_from_index(i));
   }
   DCHECK_NOT_NULL(worker_threads_task_runners_[0]);
+}
+
+bool DefaultPlatform::EnableWorkerThreads(int thread_pool_size) {
+  const int actual_thread_pool_size = GetActualThreadPoolSize(thread_pool_size);
+  base::MutexGuard guard(&lock_);
+  if (worker_threads_task_runners_[0]) {
+    return thread_pool_size_ == actual_thread_pool_size;
+  }
+  thread_pool_size_ = actual_thread_pool_size;
+  EnsureBackgroundTaskRunnerInitialized();
+  return true;
 }
 
 void DefaultPlatform::SetTimeFunctionForTesting(
@@ -336,4 +353,3 @@ void DeletePlatform_Without_Stl(v8::Platform* platform) {
 }
 }  // namespace platform
 }  // namespace v8
-

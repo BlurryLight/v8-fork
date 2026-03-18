@@ -106,6 +106,22 @@ V8_PLATFORM_EXPORT void RunIdleTasks(v8::Platform* platform,
 V8_PLATFORM_EXPORT void NotifyIsolateShutdown(v8::Platform* platform,
                                               Isolate* isolate);
 
+/**
+ * Enables worker threads on a DefaultPlatform that was previously created
+ * without a worker pool (for example via NewSingleThreadedDefaultPlatform).
+ *
+ * This must only be called after fork() in the child process, before any V8
+ * operation that may schedule background work.
+ *
+ * Returns true if worker threads are enabled with the requested size, and
+ * false if worker threads were already enabled with a different size.
+ *
+ * The |platform| has to be created using |NewDefaultPlatform| or
+ * |NewSingleThreadedDefaultPlatform|.
+ */
+V8_PLATFORM_EXPORT bool EnableWorkerThreads(v8::Platform* platform,
+                                            int thread_pool_size = 1);
+
 }  // namespace platform
 }  // namespace v8
 

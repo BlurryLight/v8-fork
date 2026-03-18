@@ -39,6 +39,7 @@ class V8_PLATFORM_EXPORT DefaultPlatform : public NON_EXPORTED_BASE(Platform) {
   DefaultPlatform& operator=(const DefaultPlatform&) = delete;
 
   void EnsureBackgroundTaskRunnerInitialized();
+  bool EnableWorkerThreads(int thread_pool_size = 1);
 
   bool PumpMessageLoop(
       v8::Isolate* isolate,
@@ -102,7 +103,7 @@ class V8_PLATFORM_EXPORT DefaultPlatform : public NON_EXPORTED_BASE(Platform) {
   }
 
   base::Mutex lock_;
-  const int thread_pool_size_;
+  int thread_pool_size_;
   IdleTaskSupport idle_task_support_;
   std::shared_ptr<DefaultWorkerThreadsTaskRunner> worker_threads_task_runners_
       [static_cast<int>(TaskPriority::kMaxPriority) + 1] = {0};

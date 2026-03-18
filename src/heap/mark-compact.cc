@@ -207,7 +207,7 @@ class FullMarkingVerifier : public MarkingVerifierBase {
 namespace {
 
 int NumberOfAvailableCores() {
-  static int num_cores = V8::GetCurrentPlatform()->NumberOfWorkerThreads() + 1;
+  const int num_cores = V8::GetCurrentPlatform()->NumberOfWorkerThreads() + 1;
   // This number of cores should be greater than zero and never change.
   DCHECK_GE(num_cores, 1);
   DCHECK_EQ(num_cores, V8::GetCurrentPlatform()->NumberOfWorkerThreads() + 1);
