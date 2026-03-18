@@ -424,4 +424,13 @@ class V8_EXPORT V8Inspector {
 
 }  // namespace v8_inspector
 
+
+namespace v8_inspector {
+
+V8_EXPORT v8_inspector::V8Inspector* V8Inspector_Create_Without_Stl(v8::Isolate*, v8_inspector::V8InspectorClient*);
+
+V8_EXPORT void V8Inspector_Destroy_Without_Stl(v8_inspector::V8Inspector*);
+
+}
+
 #endif  // V8_V8_INSPECTOR_H_

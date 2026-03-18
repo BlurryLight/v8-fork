@@ -561,3 +561,16 @@ V8InspectorImpl::getAssociatedExceptionDataForProtocol(
 }
 
 }  // namespace v8_inspector
+
+namespace v8_inspector {
+
+V8_EXPORT V8Inspector* V8Inspector_Create_Without_Stl(v8::Isolate* isolate, V8InspectorClient* client) {
+    return new V8InspectorImpl(isolate, client);
+}
+
+V8_EXPORT void V8Inspector_Destroy_Without_Stl(V8Inspector* inspector) {
+    delete inspector;
+}
+    
+}
+

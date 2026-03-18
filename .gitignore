@@ -116,3 +116,7 @@ bazel-bin
 bazel-out
 bazel-testlogs
 bazel-v8
+
+output
+output*.tar.gz
+output

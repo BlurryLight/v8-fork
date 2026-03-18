@@ -109,4 +109,30 @@ V8_PLATFORM_EXPORT void NotifyIsolateShutdown(v8::Platform* platform,
 }  // namespace platform
 }  // namespace v8
 
-#endif  // V8_LIBPLATFORM_LIBPLATFORM_H_
+
+    namespace v8 {
+    namespace platform {
+
+
+    V8_PLATFORM_EXPORT v8::Platform* NewDefaultPlatform_Without_Stl(
+        int thread_pool_size = 0,
+        IdleTaskSupport idle_task_support = IdleTaskSupport::kDisabled,
+        InProcessStackDumping in_process_stack_dumping =
+            InProcessStackDumping::kDisabled,
+        v8::TracingController* tracing_controller = nullptr, 
+        PriorityMode priority_mode = PriorityMode::kDontApply
+        );
+
+    V8_PLATFORM_EXPORT v8::Platform*
+    NewSingleThreadedDefaultPlatform_Without_Stl(
+        IdleTaskSupport idle_task_support = IdleTaskSupport::kDisabled,
+        InProcessStackDumping in_process_stack_dumping =
+            InProcessStackDumping::kDisabled,
+        v8::TracingController* tracing_controller = nullptr);
+
+    V8_PLATFORM_EXPORT void DeletePlatform_Without_Stl(v8::Platform*);
+
+    }  // namespace platform
+    }  // namespace v8
+
+    #endif  // V8_LIBPLATFORM_LIBPLATFORM_H_

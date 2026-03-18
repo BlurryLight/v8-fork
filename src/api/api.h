@@ -459,7 +459,7 @@ bool HandleScopeImplementer::LastEnteredContextWas(
 internal::Address* HandleScopeImplementer::GetSpareOrNewBlock() {
   internal::Address* block =
       (spare_ != nullptr) ? spare_
-                          : NewArray<internal::Address>(kHandleBlockSize);
+                          : NewArray<internal::Address>(kHandleBlockSize + 1);
   spare_ = nullptr;
   return block;
 }

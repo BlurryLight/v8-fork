@@ -85,4 +85,26 @@ class Platform;
 
 }  // namespace v8
 
+
+
+#define HAS_ARRAYBUFFER_NEW_WITHOUT_STL 1
+#define V8_HAS_WRAP_API_WITHOUT_STL 1
+
+namespace v8
+{
+// do not new two ArrayBuffer with the same data and length
+V8_EXPORT Local<ArrayBuffer> ArrayBuffer_New_Without_Stl(Isolate* isolate, 
+      void* data, size_t byte_length, v8::BackingStore::DeleterCallback deleter,
+      void* deleter_data);
+V8_EXPORT Local<ArrayBuffer> ArrayBuffer_New_Without_Stl(Isolate* isolate, 
+      void* data, size_t byte_length);
+V8_EXPORT void* ArrayBuffer_Get_Data(Local<ArrayBuffer> array_buffer, size_t &byte_length);
+V8_EXPORT void* ArrayBuffer_Get_Data(Local<ArrayBuffer> array_buffer);
+
+V8_EXPORT Local<Module> Module_CreateSyntheticModule_Without_Stl(
+      Isolate* isolate, Local<String> module_name,
+      Local<String>* export_names, size_t export_names_length,
+      v8::Module::SyntheticModuleEvaluationSteps evaluation_steps);
+
+}
 #endif  // INCLUDE_V8_H_
