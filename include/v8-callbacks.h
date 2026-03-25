@@ -139,6 +139,24 @@ enum JitCodeEventOptions {
  */
 using JitCodeEventHandler = void (*)(const JitCodeEvent* event);
 
+// --- JIT compilation callbacks ---
+
+enum JitCodeEventKind {
+  kJitCodeEventBaseline = 1 << 0,
+  kJitCodeEventMaglev = 1 << 1,
+  kJitCodeEventMaglevConcurrent = 1 << 2,
+  kJitCodeEventTurbofan = 1 << 3,
+  kJitCodeEventTurbofanConcurrent = 1 << 4,
+  kJitCodeEventAll = kJitCodeEventBaseline | kJitCodeEventMaglev |
+                     kJitCodeEventMaglevConcurrent | kJitCodeEventTurbofan |
+                     kJitCodeEventTurbofanConcurrent
+};
+
+using JitCodeEventCallback = void (*)(Isolate* isolate, JitCodeEventKind kind);
+using JitCodeEventCallbackWithData = void (*)(Isolate* isolate,
+                                              JitCodeEventKind kind,
+                                              void* data);
+
 // --- Garbage Collection Callbacks ---
 
 /**

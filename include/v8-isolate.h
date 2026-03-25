@@ -923,6 +923,11 @@ class V8_EXPORT Isolate {
                               GCCallbackFlags flags);
   using GCCallbackWithData = void (*)(Isolate* isolate, GCType type,
                                       GCCallbackFlags flags, void* data);
+  using JitCodeEventCallback = void (*)(Isolate* isolate,
+                                        JitCodeEventKind kind);
+  using JitCodeEventCallbackWithData = void (*)(Isolate* isolate,
+                                                JitCodeEventKind kind,
+                                                void* data);
 
   /**
    * Enables the host application to receive a notification before a
@@ -992,6 +997,83 @@ class V8_EXPORT Isolate {
    */
   void RemoveGCEpilogueCallback(GCCallbackWithData callback,
                                 void* data = nullptr);
+
+  /**
+   * Enables the host application to receive a notification before JIT
+   * compilation work starts.
+   *
+   * These callbacks may run on background compiler threads for concurrent
+   * Maglev and TurboFan compilation.
+   *
+   * \param callback The callback to be invoked.
+   * \param kind_filter A filter in case it should be applied.
+   */
+  void AddJitCodeEventPrologueCallback(
+      JitCodeEventCallback callback,
+      JitCodeEventKind kind_filter = kJitCodeEventAll);
+
+  /**
+   * \copydoc AddJitCodeEventPrologueCallback(JitCodeEventCallback,
+   *                                          JitCodeEventKind)
+   *
+   * \param data Additional data that should be passed to the callback.
+   */
+  void AddJitCodeEventPrologueCallback(
+      JitCodeEventCallbackWithData callback, void* data = nullptr,
+      JitCodeEventKind kind_filter = kJitCodeEventAll);
+
+  /**
+   * This function removes a callback which was added by
+   * `AddJitCodeEventPrologueCallback`.
+   *
+   * \param callback the callback to remove.
+   */
+  void RemoveJitCodeEventPrologueCallback(JitCodeEventCallback callback);
+
+  /**
+   * \copydoc RemoveJitCodeEventPrologueCallback(JitCodeEventCallback)
+   *
+   * \param data Additional data that was used to install the callback.
+   */
+  void RemoveJitCodeEventPrologueCallback(JitCodeEventCallbackWithData callback,
+                                          void* data = nullptr);
+
+  /**
+   * Enables the host application to receive a notification after JIT
+   * compilation work ends.
+   *
+   * \copydetails AddJitCodeEventPrologueCallback(JitCodeEventCallback,
+   *                                              JitCodeEventKind)
+   */
+  void AddJitCodeEventEpilogueCallback(
+      JitCodeEventCallback callback,
+      JitCodeEventKind kind_filter = kJitCodeEventAll);
+
+  /**
+   * \copydoc AddJitCodeEventEpilogueCallback(JitCodeEventCallback,
+   *                                          JitCodeEventKind)
+   *
+   * \param data Additional data that should be passed to the callback.
+   */
+  void AddJitCodeEventEpilogueCallback(
+      JitCodeEventCallbackWithData callback, void* data = nullptr,
+      JitCodeEventKind kind_filter = kJitCodeEventAll);
+
+  /**
+   * This function removes a callback which was added by
+   * `AddJitCodeEventEpilogueCallback`.
+   *
+   * \param callback the callback to remove.
+   */
+  void RemoveJitCodeEventEpilogueCallback(JitCodeEventCallback callback);
+
+  /**
+   * \copydoc RemoveJitCodeEventEpilogueCallback(JitCodeEventCallback)
+   *
+   * \param data Additional data that was used to install the callback.
+   */
+  void RemoveJitCodeEventEpilogueCallback(JitCodeEventCallbackWithData callback,
+                                          void* data = nullptr);
 
   /**
    * Sets an embedder roots handle that V8 should consider when performing

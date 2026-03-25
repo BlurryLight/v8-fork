@@ -1042,6 +1042,7 @@ bool PrepareJobWithHandleScope(OptimizedCompilationJob* job, Isolate* isolate,
 
 bool CompileTurbofan_NotConcurrent(Isolate* isolate,
                                    TurbofanCompilationJob* job) {
+  JitCodeEventScope jit_code_event_scope(isolate, v8::kJitCodeEventTurbofan);
   OptimizedCompilationInfo* const compilation_info = job->compilation_info();
   DCHECK_EQ(compilation_info->code_kind(), CodeKind::TURBOFAN);
 
@@ -1223,6 +1224,7 @@ MaybeHandle<Code> CompileMaglev(Isolate* isolate, Handle<JSFunction> function,
                                 ConcurrencyMode mode, BytecodeOffset osr_offset,
                                 CompileResultBehavior result_behavior) {
 #ifdef V8_ENABLE_MAGLEV
+  std::unique_ptr<JitCodeEventScope> jit_code_event_scope;
   DCHECK(maglev::IsMaglevEnabled());
   CHECK(result_behavior == CompileResultBehavior::kDefault);
 
@@ -1257,6 +1259,8 @@ MaybeHandle<Code> CompileMaglev(Isolate* isolate, Handle<JSFunction> function,
   }
 
   if (IsSynchronous(mode)) {
+    jit_code_event_scope =
+        std::make_unique<JitCodeEventScope>(isolate, v8::kJitCodeEventMaglev);
     CompilationJob::Status status =
         job->ExecuteJob(isolate->counters()->runtime_call_stats(),
                         isolate->main_thread_local_isolate());
@@ -2722,6 +2726,7 @@ bool Compiler::CompileSharedWithBaseline(Isolate* isolate,
   Handle<Code> code;
   base::TimeDelta time_taken;
   {
+    JitCodeEventScope jit_code_event_scope(isolate, v8::kJitCodeEventBaseline);
     base::ScopedTimer timer(
         v8_flags.trace_baseline || v8_flags.log_function_events ? &time_taken
                                                                 : nullptr);

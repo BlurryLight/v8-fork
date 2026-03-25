@@ -17870,6 +17870,10 @@ int prologue_call_count_second = 0;
 int epilogue_call_count_second = 0;
 int prologue_call_count_alloc = 0;
 int epilogue_call_count_alloc = 0;
+v8::Isolate* jit_code_event_callbacks_isolate = nullptr;
+int jit_code_event_prologue_count = 0;
+int jit_code_event_epilogue_count = 0;
+v8::JitCodeEventKind last_jit_code_event_kind = v8::kJitCodeEventAll;
 
 void PrologueCallback(v8::Isolate* isolate,
                       v8::GCType,
@@ -17917,6 +17921,20 @@ void EpilogueCallbackNew(v8::Isolate* isolate, v8::GCType,
   CHECK_EQ(flags, v8::kNoGCCallbackFlags);
   CHECK_EQ(gc_callbacks_isolate, isolate);
   ++*static_cast<int*>(data);
+}
+
+void JitCodeEventPrologueCallback(v8::Isolate* isolate,
+                                  v8::JitCodeEventKind kind) {
+  CHECK_EQ(jit_code_event_callbacks_isolate, isolate);
+  ++jit_code_event_prologue_count;
+  last_jit_code_event_kind = kind;
+}
+
+void JitCodeEventEpilogueCallback(v8::Isolate* isolate,
+                                  v8::JitCodeEventKind kind) {
+  CHECK_EQ(jit_code_event_callbacks_isolate, isolate);
+  CHECK_EQ(last_jit_code_event_kind, kind);
+  ++jit_code_event_epilogue_count;
 }
 
 TEST(GCCallbacksOld) {
@@ -17999,6 +18017,33 @@ TEST(GCCallbacksWithData) {
   CHECK_EQ(2, epilogue1);
   CHECK_EQ(2, prologue2);
   CHECK_EQ(2, epilogue2);
+}
+
+TEST(JitCodeEventCallbacks) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  jit_code_event_callbacks_isolate = isolate;
+  jit_code_event_prologue_count = 0;
+  jit_code_event_epilogue_count = 0;
+  last_jit_code_event_kind = v8::kJitCodeEventAll;
+
+  i::v8_flags.allow_natives_syntax = true;
+  isolate->AddJitCodeEventPrologueCallback(JitCodeEventPrologueCallback,
+                                           v8::kJitCodeEventBaseline);
+  isolate->AddJitCodeEventEpilogueCallback(JitCodeEventEpilogueCallback,
+                                           v8::kJitCodeEventBaseline);
+
+  CompileRun("function f(x) { return x + 1; } f(1); %CompileBaseline(f);");
+
+  CHECK_EQ(1, jit_code_event_prologue_count);
+  CHECK_EQ(1, jit_code_event_epilogue_count);
+  CHECK_EQ(v8::kJitCodeEventBaseline, last_jit_code_event_kind);
+
+  isolate->RemoveJitCodeEventPrologueCallback(JitCodeEventPrologueCallback);
+  isolate->RemoveJitCodeEventEpilogueCallback(JitCodeEventEpilogueCallback);
+  i::v8_flags.allow_natives_syntax = false;
 }
 
 TEST(ContainsOnlyOneByte) {

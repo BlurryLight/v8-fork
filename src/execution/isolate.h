@@ -1664,6 +1664,31 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
     FireCallCompletedCallbackInternal(microtask_queue);
   }
 
+  void AddJitCodeEventPrologueCallback(
+      v8::JitCodeEventCallbackWithData callback, void* data,
+      v8::JitCodeEventKind kind);
+  void RemoveJitCodeEventPrologueCallback(
+      v8::JitCodeEventCallbackWithData callback, void* data);
+  void AddJitCodeEventEpilogueCallback(
+      v8::JitCodeEventCallbackWithData callback, void* data,
+      v8::JitCodeEventKind kind);
+  void RemoveJitCodeEventEpilogueCallback(
+      v8::JitCodeEventCallbackWithData callback, void* data);
+  void CallJitCodeEventPrologueCallbacks(v8::JitCodeEventKind kind);
+  void CallJitCodeEventEpilogueCallbacks(v8::JitCodeEventKind kind);
+
+  struct JitCodeEventCallbackData final {
+    JitCodeEventCallbackData(v8::JitCodeEventCallbackWithData callback,
+                             v8::Isolate* isolate, v8::JitCodeEventKind kind,
+                             void* data)
+        : callback(callback), isolate(isolate), kind(kind), data(data) {}
+
+    v8::JitCodeEventCallbackWithData callback;
+    v8::Isolate* isolate;
+    v8::JitCodeEventKind kind;
+    void* data;
+  };
+
   void AddBeforeCallEnteredCallback(BeforeCallEnteredCallback callback);
   void RemoveBeforeCallEnteredCallback(BeforeCallEnteredCallback callback);
   inline void FireBeforeCallEnteredCallback();
@@ -2447,6 +2472,10 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
   // Vector of callbacks when a Call completes.
   std::vector<CallCompletedCallback> call_completed_callbacks_;
 
+  mutable base::Mutex jit_code_event_callbacks_mutex_;
+  std::vector<JitCodeEventCallbackData> jit_code_event_prologue_callbacks_;
+  std::vector<JitCodeEventCallbackData> jit_code_event_epilogue_callbacks_;
+
   v8::Isolate::UseCounterCallback use_counter_callback_ = nullptr;
 
   std::shared_ptr<CompilationStatistics> turbo_statistics_;
@@ -2755,6 +2784,20 @@ class V8_NODISCARD SharedMutexGuardIfOffThread<Isolate, kIsShared> final {
   SharedMutexGuardIfOffThread(const SharedMutexGuardIfOffThread&) = delete;
   SharedMutexGuardIfOffThread& operator=(const SharedMutexGuardIfOffThread&) =
       delete;
+};
+
+class V8_NODISCARD JitCodeEventScope final {
+ public:
+  JitCodeEventScope(Isolate* isolate, v8::JitCodeEventKind kind)
+      : isolate_(isolate), kind_(kind) {
+    isolate_->CallJitCodeEventPrologueCallbacks(kind_);
+  }
+
+  ~JitCodeEventScope() { isolate_->CallJitCodeEventEpilogueCallbacks(kind_); }
+
+ private:
+  Isolate* isolate_;
+  v8::JitCodeEventKind kind_;
 };
 
 }  // namespace internal

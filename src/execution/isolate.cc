@@ -5232,6 +5232,95 @@ void Isolate::RemoveCallCompletedCallback(CallCompletedCallback callback) {
   call_completed_callbacks_.erase(pos);
 }
 
+namespace {
+
+std::vector<Isolate::JitCodeEventCallbackData>::iterator
+FindJitCodeEventCallback(
+    std::vector<Isolate::JitCodeEventCallbackData>& callbacks,
+    v8::JitCodeEventCallbackWithData callback, void* data) {
+  return std::find_if(
+      callbacks.begin(), callbacks.end(),
+      [callback, data](const Isolate::JitCodeEventCallbackData& entry) {
+        return entry.callback == callback && entry.data == data;
+      });
+}
+
+void AddJitCodeEventCallback(
+    std::vector<Isolate::JitCodeEventCallbackData>* callbacks,
+    v8::JitCodeEventCallbackWithData callback, v8::Isolate* isolate,
+    v8::JitCodeEventKind kind, void* data) {
+  DCHECK_NOT_NULL(callback);
+  DCHECK_EQ(callbacks->end(),
+            FindJitCodeEventCallback(*callbacks, callback, data));
+  callbacks->emplace_back(callback, isolate, kind, data);
+}
+
+void RemoveJitCodeEventCallback(
+    std::vector<Isolate::JitCodeEventCallbackData>* callbacks,
+    v8::JitCodeEventCallbackWithData callback, void* data) {
+  auto pos = FindJitCodeEventCallback(*callbacks, callback, data);
+  DCHECK_NE(callbacks->end(), pos);
+  callbacks->erase(pos);
+}
+
+void InvokeJitCodeEventCallbacks(
+    base::Mutex* mutex,
+    std::vector<Isolate::JitCodeEventCallbackData>* callbacks,
+    v8::JitCodeEventKind kind) {
+  std::vector<Isolate::JitCodeEventCallbackData> callbacks_to_invoke;
+  {
+    base::MutexGuard guard(mutex);
+    callbacks_to_invoke = *callbacks;
+  }
+  for (const auto& callback_data : callbacks_to_invoke) {
+    if (kind & callback_data.kind) {
+      callback_data.callback(callback_data.isolate, kind, callback_data.data);
+    }
+  }
+}
+
+}  // namespace
+
+void Isolate::AddJitCodeEventPrologueCallback(
+    v8::JitCodeEventCallbackWithData callback, void* data,
+    v8::JitCodeEventKind kind) {
+  base::MutexGuard guard(&jit_code_event_callbacks_mutex_);
+  AddJitCodeEventCallback(&jit_code_event_prologue_callbacks_, callback,
+                          reinterpret_cast<v8::Isolate*>(this), kind, data);
+}
+
+void Isolate::RemoveJitCodeEventPrologueCallback(
+    v8::JitCodeEventCallbackWithData callback, void* data) {
+  base::MutexGuard guard(&jit_code_event_callbacks_mutex_);
+  RemoveJitCodeEventCallback(&jit_code_event_prologue_callbacks_, callback,
+                             data);
+}
+
+void Isolate::AddJitCodeEventEpilogueCallback(
+    v8::JitCodeEventCallbackWithData callback, void* data,
+    v8::JitCodeEventKind kind) {
+  base::MutexGuard guard(&jit_code_event_callbacks_mutex_);
+  AddJitCodeEventCallback(&jit_code_event_epilogue_callbacks_, callback,
+                          reinterpret_cast<v8::Isolate*>(this), kind, data);
+}
+
+void Isolate::RemoveJitCodeEventEpilogueCallback(
+    v8::JitCodeEventCallbackWithData callback, void* data) {
+  base::MutexGuard guard(&jit_code_event_callbacks_mutex_);
+  RemoveJitCodeEventCallback(&jit_code_event_epilogue_callbacks_, callback,
+                             data);
+}
+
+void Isolate::CallJitCodeEventPrologueCallbacks(v8::JitCodeEventKind kind) {
+  InvokeJitCodeEventCallbacks(&jit_code_event_callbacks_mutex_,
+                              &jit_code_event_prologue_callbacks_, kind);
+}
+
+void Isolate::CallJitCodeEventEpilogueCallbacks(v8::JitCodeEventKind kind) {
+  InvokeJitCodeEventCallbacks(&jit_code_event_callbacks_mutex_,
+                              &jit_code_event_epilogue_callbacks_, kind);
+}
+
 void Isolate::FireCallCompletedCallbackInternal(
     MicrotaskQueue* microtask_queue) {
   DCHECK(thread_local_top()->CallDepthIsZero());

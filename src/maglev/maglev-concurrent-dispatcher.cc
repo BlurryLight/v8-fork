@@ -245,6 +245,8 @@ class MaglevConcurrentDispatcher::JobTask final : public v8::JobTask {
       std::unique_ptr<MaglevCompilationJob> job;
       if (incoming_queue()->Dequeue(&job)) {
         DCHECK_NOT_NULL(job);
+        JitCodeEventScope jit_code_event_scope(
+            isolate(), v8::kJitCodeEventMaglevConcurrent);
         TRACE_EVENT_WITH_FLOW0(
             TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.MaglevBackground",
             job->trace_id(),

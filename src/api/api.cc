@@ -9201,6 +9201,64 @@ void Isolate::RemoveGCEpilogueCallback(GCCallback callback) {
   RemoveGCEpilogueCallback(CallGCCallbackWithoutData, data);
 }
 
+void Isolate::AddJitCodeEventPrologueCallback(
+    JitCodeEventCallbackWithData callback, void* data,
+    JitCodeEventKind kind_filter) {
+  i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+  i_isolate->AddJitCodeEventPrologueCallback(callback, data, kind_filter);
+}
+
+void Isolate::RemoveJitCodeEventPrologueCallback(
+    JitCodeEventCallbackWithData callback, void* data) {
+  i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+  i_isolate->RemoveJitCodeEventPrologueCallback(callback, data);
+}
+
+void Isolate::AddJitCodeEventEpilogueCallback(
+    JitCodeEventCallbackWithData callback, void* data,
+    JitCodeEventKind kind_filter) {
+  i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+  i_isolate->AddJitCodeEventEpilogueCallback(callback, data, kind_filter);
+}
+
+void Isolate::RemoveJitCodeEventEpilogueCallback(
+    JitCodeEventCallbackWithData callback, void* data) {
+  i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+  i_isolate->RemoveJitCodeEventEpilogueCallback(callback, data);
+}
+
+static void CallJitCodeEventCallbackWithoutData(Isolate* v8_isolate,
+                                                JitCodeEventKind kind,
+                                                void* data) {
+  reinterpret_cast<Isolate::JitCodeEventCallback>(data)(v8_isolate, kind);
+}
+
+void Isolate::AddJitCodeEventPrologueCallback(JitCodeEventCallback callback,
+                                              JitCodeEventKind kind_filter) {
+  void* data = reinterpret_cast<void*>(callback);
+  AddJitCodeEventPrologueCallback(CallJitCodeEventCallbackWithoutData, data,
+                                  kind_filter);
+}
+
+void Isolate::RemoveJitCodeEventPrologueCallback(
+    JitCodeEventCallback callback) {
+  void* data = reinterpret_cast<void*>(callback);
+  RemoveJitCodeEventPrologueCallback(CallJitCodeEventCallbackWithoutData, data);
+}
+
+void Isolate::AddJitCodeEventEpilogueCallback(JitCodeEventCallback callback,
+                                              JitCodeEventKind kind_filter) {
+  void* data = reinterpret_cast<void*>(callback);
+  AddJitCodeEventEpilogueCallback(CallJitCodeEventCallbackWithoutData, data,
+                                  kind_filter);
+}
+
+void Isolate::RemoveJitCodeEventEpilogueCallback(
+    JitCodeEventCallback callback) {
+  void* data = reinterpret_cast<void*>(callback);
+  RemoveJitCodeEventEpilogueCallback(CallJitCodeEventCallbackWithoutData, data);
+}
+
 void Isolate::SetEmbedderRootsHandler(EmbedderRootsHandler* handler) {
   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
   i_isolate->heap()->SetEmbedderRootsHandler(handler);

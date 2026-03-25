@@ -97,6 +97,8 @@ TurbofanCompilationJob* OptimizingCompileDispatcher::NextInput(
 void OptimizingCompileDispatcher::CompileNext(TurbofanCompilationJob* job,
                                               LocalIsolate* local_isolate) {
   if (!job) return;
+  JitCodeEventScope jit_code_event_scope(isolate_,
+                                         v8::kJitCodeEventTurbofanConcurrent);
 
   // The function may have already been optimized by OSR.  Simply continue.
   CompilationJob::Status status =
